@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .panel{border:2px solid;position:absolute}
+        #board{border-color:red;left:0;top:0}
+        #menu{border-color:green}
+        html,body{height:100%;min-height:100%;margin:0}
+        *{overflow:hidden;position:relative}
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>
+        var width, height, upright, heartbeat;
+        function start() {
+            heartbeat = setInterval(function () {
+                width = $(window).width();
+                height = $(window).height();
+                upright = (height > width);
+                if (upright) {
+                    $('#board')
+                        .outerWidth(width)
+                        .outerHeight(width);
+                    $('#menu')
+                        .outerWidth(width)
+                        .outerHeight(height - width)
+                        .offset({
+                            top: width,
+                            left: 0
+                        });
+                } else {
+                    $('#board')
+                        .outerWidth(height)
+                        .outerHeight(height);
+                    $('#menu')
+                        .outerWidth(width - height)
+                        .outerHeight(height)
+                        .offset({
+                            top: 0,
+                            left: height
+                        });
+                }
+                $('#board').html($('<p>')
+                    .text('Window: (' + width + ',' + height + ') - ')
+                    .append('(' + $('#board').outerWidth() + ',' + $('#board').outerHeight() + ')')
+                );
+                $('#menu').html($('<p>')
+                    .text('Upright? ' + upright + ' - ')
+                    .append('(' + $('#menu').outerWidth() + ',' + $('#menu').outerHeight() + ')')
+                );
+                console.log('beat');
+            }, 500);
+        }
+        $(document).on('keypress', function (e) {
+            if (e.keyCode == 32) {
+                clearInterval(heartbeat);
+            } else if (e.keyCode == 13) {
+                start();
+            }
+        });
+        
+        $(function () {
+            start();
+        });
+    </script>
+</head>
+<body>
+    <div id="board" class="panel">Thing</div>
+    <div id="menu" class="panel">Thing</div>
+</body>
+</html>
