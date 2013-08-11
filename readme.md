@@ -1,4 +1,4 @@
-# Rogue Iron
+# Iron
 ### Mobile-friendly HTML5 game engine.
 Version **0.0.1**
 
