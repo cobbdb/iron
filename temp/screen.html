@@ -54,10 +54,15 @@
                 Screen.size.height = Math.min($(window).height(), Screen.max.height);
                 Screen.upright = (Screen.size.height > Screen.size.width);
                 
+                var tall, wide;
                 if (Screen.upright) {
-                    Tile.size = Math.floor(Screen.size.width / Board.game.count());
+                    tall = Math.floor(Screen.size.height / (Board.game.count() + Board.menu.count()));
+                    wide = Math.floor(Screen.size.width / Board.game.count());
+                    Tile.size = Math.min(wide, tall);
                 } else {
-                    Tile.size = Math.floor(Screen.size.height / Board.game.count());
+                    tall = Math.floor(Screen.size.height / Board.game.count());
+                    wide = Math.floor(Screen.size.width / (Board.game.count() + Board.menu.count()));
+                    Tile.size = Math.min(wide, tall);
                 }
                 
                 Board.game.size({
