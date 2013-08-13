@@ -4,51 +4,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         .panel{border:2px solid;position:absolute}
-        #board{border-color:red;left:0;top:0}
+        #game{border-color:red;left:0;top:0}
         #menu{border-color:green}
         html,body{height:100%;min-height:100%;margin:0}
         *{overflow:hidden;position:relative}
     </style>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script>
-        var width, height, upright, heartbeat;
+        var heartbeat;
+        
+        var Functions = {
+            setter: function (data, field) {
+                return function (o) {
+                    if (o) {
+                        data[field] = o;
+                        return this;
+                    }
+                    return data[field];
+                };
+            }
+        };
+        
+        var Board = function (count) {
+            var data = {
+                count: count,
+                size: {}
+            };
+            return {
+                count: Functions.setter(data, 'count'),
+                size: Functions.setter(data, 'size')
+            };
+        };
+        Board.game = Board(10);
+        Board.menu = Board(4);
+        
+        var Screen = {
+            max: {
+                width: 1024,
+                height: 768
+            },
+            size: {}
+        };
+        
+        var Tile = {};
+        
         function start() {
             heartbeat = setInterval(function () {
-                width = $(window).width();
-                height = $(window).height();
-                upright = (height > width);
-                if (upright) {
-                    $('#board')
-                        .outerWidth(width)
-                        .outerHeight(width);
-                    $('#menu')
-                        .outerWidth(width)
-                        .outerHeight(height - width)
-                        .offset({
-                            top: width,
-                            left: 0
-                        });
+                Screen.size.width = Math.min($(window).width(), Screen.max.width);
+                Screen.size.height = Math.min($(window).height(), Screen.max.height);
+                Screen.upright = (Screen.size.height > Screen.size.width);
+                
+                if (Screen.upright) {
+                    Tile.size = Math.floor(Screen.size.width / Board.game.count());
                 } else {
-                    $('#board')
-                        .outerWidth(height)
-                        .outerHeight(height);
-                    $('#menu')
-                        .outerWidth(width - height)
-                        .outerHeight(height)
-                        .offset({
-                            top: 0,
-                            left: height
-                        });
+                    Tile.size = Math.floor(Screen.size.height / Board.game.count());
                 }
-                $('#board').html($('<p>')
-                    .text('Window: (' + width + ',' + height + ') - ')
-                    .append('(' + $('#board').outerWidth() + ',' + $('#board').outerHeight() + ')')
-                );
-                $('#menu').html($('<p>')
-                    .text('Upright? ' + upright + ' - ')
-                    .append('(' + $('#menu').outerWidth() + ',' + $('#menu').outerHeight() + ')')
-                );
-                console.log('beat');
+                
+                Board.game.size({
+                    top: 0,
+                    left: 0,
+                    width: Tile.size * Board.game.count(),
+                    height: Tile.size * Board.game.count()
+                });
+                
+                if (Screen.upright) {
+                    Board.menu.size({
+                        top: Tile.size * Board.game.count(),
+                        left: 0,
+                        width: Tile.size * Board.game.count(),
+                        height: Tile.size * Board.menu.count()
+                    });
+                } else {
+                    Board.menu.size({
+                        top: 0,
+                        left: Tile.size * Board.game.count(),
+                        width: Tile.size * Board.menu.count(),
+                        height: Tile.size * Board.game.count()
+                    });
+                }
+                
+                $('#game')
+                    .outerWidth(Board.game.size().width)
+                    .outerHeight(Board.game.size().height)
+                    .offset({
+                        top: 0,
+                        left: 0
+                    });
+                $('#menu')
+                    .outerWidth(Board.menu.size().width)
+                    .outerHeight(Board.menu.size().height)
+                    .offset({
+                        top: Board.menu.size().top,
+                        left: Board.menu.size().left
+                    });
             }, 500);
         }
         $(document).on('keypress', function (e) {
@@ -56,6 +104,12 @@
                 clearInterval(heartbeat);
             } else if (e.keyCode == 13) {
                 start();
+            } else if (e.keyCode == 112) {
+                console.log('==== START ====');
+                console.log(Board);
+                console.log(Screen);
+                console.log(Tile);
+                console.log('==== FIN ====');
             }
         });
         
@@ -65,7 +119,7 @@
     </script>
 </head>
 <body>
-    <div id="board" class="panel">Thing</div>
-    <div id="menu" class="panel">Thing</div>
+    <div id="game" class="panel"></div>
+    <div id="menu" class="panel"></div>
 </body>
 </html>
