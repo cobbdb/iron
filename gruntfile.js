@@ -9,10 +9,10 @@ module.exports = function (grunt) {
                 nonew: false,
                 plusplus: true,
                 quotmark: false,
-                trailing: false
+                trailing: true
             },
             default: {
-                src: ['./private/js/*.js']
+                src: ['./source/*.js']
             }
         },
         uglify: {
@@ -20,39 +20,19 @@ module.exports = function (grunt) {
                 mangle: {
                     except: [
                         '_',
-                        '$',
-                        '$scope',
-                        '$index',
-                        '$event'
+                        '$'
                     ]
                 }
             },
             default: {
-                src: ['./private/js/*.js'],
-                dest: './res/rain.min.js'
-            }
-        },
-        cssmin: {
-            default: {
-                src: ['./private/css/*.css'],
-                dest: './res/rain.min.css'
+                src: ['./source/*.js'],
+                dest: './build/iron.min.js'
             }
         },
         watch: {
             scripts: {
-                files: [
-                    './private/js/*.js'
-                ],
-                tasks: [
-                    'jshint',
-                    'uglify'
-                ]
-            },
-            styles: {
-                files: [
-                    './private/css/*.css'
-                ],
-                tasks: ['cssmin']
+                files: ['./source/*.js'],
+                tasks: ['deploy']
             }
         }
     });
@@ -60,11 +40,9 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
 
     grunt.registerTask('deploy', [
         'jshint',
-        'uglify',
-        'cssmin'
+        'uglify'
     ]);
 };

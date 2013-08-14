@@ -12,103 +12,120 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script>
         var heartbeat;
-        
+
         var Functions = {
-            setter: function (data, field) {
-                return function (o) {
-                    if (o) {
-                        data[field] = o;
-                        return this;
+            accessor: function (obj, field) {
+                return function (data) {
+                    if (data) {
+                        obj[field] = data;
+                        return obj;
                     }
-                    return data[field];
+                    return obj[field];
                 };
             }
         };
-        
-        var Board = function (count) {
+
+        var Panel = function (width, height) {
             var data = {
-                count: count,
                 size: {}
             };
+            if (height) {
+                data.count = Dimension(width, height);
+            } else {
+                data.count = width;
+            }
             return {
-                count: Functions.setter(data, 'count'),
-                size: Functions.setter(data, 'size')
+                count: Functions.accessor(data, 'count'),
+                size: Functions.accessor(data, 'size')
             };
         };
-        Board.game = Board(10);
-        Board.menu = Board(4);
-        
-        var Screen = {
-            max: {
-                width: 1024,
-                height: 768
-            },
-            size: {},
-            window: {}
+        Panel.body = Panel(10, 10);
+        Panel.foot = Panel(4);
+        Panel.head = Panel(2);
+
+        function Dimension(w, h) {
+            return {
+                width: w,
+                height: h
+            };
+        }
+
+        var Screen = function (o) {
+            return {
+                max: o.max,
+                window: o.window,
+                size: Dimension(
+                    Math.min(o.window.width, o.max.width),
+                    Math.min(o.window.height, o.max.height)
+                ),
+                upright: (o.window.height > o.window.width)
+            };
         };
-        
+
         var Tile = {};
-        
+
         $(function () {
             heartbeat = setInterval(function () {
-                Screen.window.width = $(window).width();
-                Screen.window.height = $(window).height();
-                Screen.size.width = Math.min(Screen.window.width, Screen.max.width);
-                Screen.size.height = Math.min(Screen.window.height, Screen.max.height);
-                Screen.upright = (Screen.size.height > Screen.size.width);
-                
+                var screen = Screen({
+                    max: Dimension(1024, 768),
+                    window: Dimension(
+                        $(window).width(),
+                        $(window).height()
+                    )
+                });
+
                 var tall, wide;
-                if (Screen.upright) {
-                    tall = Math.floor(Screen.size.height / (Board.game.count() + Board.menu.count()));
-                    wide = Math.floor(Screen.size.width / Board.game.count());
+                if (screen.upright) {
+                    tall = Math.floor(screen.size.height / (Panel.board.count() + Panel.menu.count()));
+                    wide = Math.floor(screen.size.width / Panel.board.count());
                     Tile.size = Math.min(wide, tall);
                 } else {
-                    tall = Math.floor(Screen.size.height / Board.game.count());
-                    wide = Math.floor(Screen.size.width / (Board.game.count() + Board.menu.count()));
+                    tall = Math.floor(screen.size.height / Panel.board.count());
+                    wide = Math.floor(screen.size.width / (Panel.board.count() + Panel.menu.count()));
                     Tile.size = Math.min(wide, tall);
                 }
-                
-                if (Screen.upright) {
-                    Board.game.size({
-                        top: (Screen.window.height - Tile.size * (Board.game.count() + Board.menu.count())) / 2,
-                        left: (Screen.window.width - Tile.size * Board.game.count()) / 2,
-                        width: Tile.size * Board.game.count(),
-                        height: Tile.size * Board.game.count()
+
+                if (screen.upright) {
+                    Panel.board.size({
+                        top: (screen.window.height - Tile.size * (Panel.board.count() + Panel.menu.count())) / 2,
+                        left: (screen.window.width - Tile.size * Panel.board.count()) / 2,
+                        width: Tile.size * Panel.board.count(),
+                        height: Tile.size * Panel.board.count()
                     });
-                    Board.menu.size({
-                        top: Tile.size * Board.game.count() + Board.game.size().top,
-                        left: Board.game.size().left,
-                        width: Tile.size * Board.game.count(),
-                        height: Tile.size * Board.menu.count()
+                    Panel.menu.size({
+                        top: Tile.size * Panel.board.count() + Panel.board.size().top,
+                        left: Panel.board.size().left,
+                        width: Tile.size * Panel.board.count(),
+                        height: Tile.size * Panel.menu.count()
                     });
                 } else {
-                    Board.game.size({
-                        top: (Screen.window.height - Tile.size * Board.game.count()) / 2,
-                        left: (Screen.window.width - Tile.size * (Board.game.count() + Board.menu.count())) / 2,
-                        width: Tile.size * Board.game.count(),
-                        height: Tile.size * Board.game.count()
+                    Panel.board.size({
+                        top: (screen.window.height - Tile.size * Panel.board.count()) / 2,
+                        left: (screen.window.width - Tile.size * (Panel.board.count() + Panel.menu.count())) / 2,
+                        width: Tile.size * Panel.board.count(),
+                        height: Tile.size * Panel.board.count()
                     });
-                    Board.menu.size({
-                        top: Board.game.size().top,
-                        left: Tile.size * Board.game.count() + Board.game.size().left,
-                        width: Tile.size * Board.menu.count(),
-                        height: Tile.size * Board.game.count()
+                    Panel.menu.size({
+                        top: Panel.board.size().top,
+                        left: Tile.size * Panel.board.count() + Panel.board.size().left,
+                        width: Tile.size * Panel.menu.count(),
+                        height: Tile.size * Panel.board.count()
                     });
                 }
-                
+
                 $('#game')
-                    .outerWidth(Board.game.size().width)
-                    .outerHeight(Board.game.size().height)
+                    .outerWidth(Panel.board.size().width)
+                    .outerHeight(Panel.board.size().height)
                     .offset({
-                        top: Board.game.size().top,
-                        left: Board.game.size().left
+                        top: Panel.board.size().top,
+                        left: Panel.board.size().left
                     });
                 $('#menu')
-                    .outerWidth(Board.menu.size().width)
-                    .outerHeight(Board.menu.size().height)
+                    .outerWidth(Panel.menu.size().width)
+                    .outerHeight(Panel.menu.size().height)
                     .offset({
-                        top: Board.menu.size().top,
-                        left: Board.menu.size().left
+                        top: Panel.menu.size().top,
+                        left: Panel.menu.size().left
                     });
             }, 500);
         });
