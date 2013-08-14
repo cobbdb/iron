@@ -39,9 +39,27 @@
                 size: Functions.accessor(data, 'size')
             };
         };
-        Panel.body = Panel(10, 10);
-        Panel.foot = Panel(4);
-        Panel.head = Panel(2);
+
+        function Frame(o) {
+            return {
+                body: o.body,
+                foot: o.foot,
+                head: o.head,
+                size: function (upright) {
+                    if (upright) {
+                        return {
+                            width: o.body.count(),
+                            height: o.body.count() + o.foot.count() + o.head.count()
+                        };
+                    } else {
+                        return {
+                            width: o.body.count() + o.foot.count() + o.head.count(),
+                            height: o.body.count()
+                        };
+                    }
+                }
+            };
+        }
 
         function Dimension(w, h) {
             return {
@@ -54,15 +72,21 @@
             return {
                 max: o.max,
                 window: o.window,
-                size: Dimension(
-                    Math.min(o.window.width, o.max.width),
-                    Math.min(o.window.height, o.max.height)
-                ),
+                size: {
+                    width: Math.min(o.window.width, o.max.width),
+                    height: Math.min(o.window.height, o.max.height)
+                },
                 upright: (o.window.height > o.window.width)
             };
         };
 
         var Tile = {};
+
+        var frame = Frame({
+            body: Panel(10, 10),
+            foot: Panel(4),
+            head: Panel(2)
+        });
 
         $(function () {
             heartbeat = setInterval(function () {
@@ -74,16 +98,10 @@
                     )
                 });
 
-                var tall, wide;
-                if (screen.upright) {
-                    tall = Math.floor(screen.size.height / (Panel.board.count() + Panel.menu.count()));
-                    wide = Math.floor(screen.size.width / Panel.board.count());
-                    Tile.size = Math.min(wide, tall);
-                } else {
-                    tall = Math.floor(screen.size.height / Panel.board.count());
-                    wide = Math.floor(screen.size.width / (Panel.board.count() + Panel.menu.count()));
-                    Tile.size = Math.min(wide, tall);
-                }
+                var frameSize = frame.size(screen.upright);
+                var tall = Math.floor(screen.size.height / frameSize.height);
+                var wide = Math.floor(screen.size.width / frameSize.width);
+                Tile.size = Math.min(tall, wide);
 
                 if (screen.upright) {
                     Panel.board.size({
