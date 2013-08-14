@@ -43,15 +43,18 @@
                 width: 1024,
                 height: 768
             },
-            size: {}
+            size: {},
+            window: {}
         };
         
         var Tile = {};
         
-        function start() {
+        $(function () {
             heartbeat = setInterval(function () {
-                Screen.size.width = Math.min($(window).width(), Screen.max.width);
-                Screen.size.height = Math.min($(window).height(), Screen.max.height);
+                Screen.window.width = $(window).width();
+                Screen.window.height = $(window).height();
+                Screen.size.width = Math.min(Screen.window.width, Screen.max.width);
+                Screen.size.height = Math.min(Screen.window.height, Screen.max.height);
                 Screen.upright = (Screen.size.height > Screen.size.width);
                 
                 var tall, wide;
@@ -65,24 +68,29 @@
                     Tile.size = Math.min(wide, tall);
                 }
                 
-                Board.game.size({
-                    top: 0,
-                    left: 0,
-                    width: Tile.size * Board.game.count(),
-                    height: Tile.size * Board.game.count()
-                });
-                
                 if (Screen.upright) {
+                    Board.game.size({
+                        top: (Screen.window.height - Tile.size * (Board.game.count() + Board.menu.count())) / 2,
+                        left: (Screen.window.width - Tile.size * Board.game.count()) / 2,
+                        width: Tile.size * Board.game.count(),
+                        height: Tile.size * Board.game.count()
+                    });
                     Board.menu.size({
-                        top: Tile.size * Board.game.count(),
-                        left: 0,
+                        top: Tile.size * Board.game.count() + Board.game.size().top,
+                        left: Board.game.size().left,
                         width: Tile.size * Board.game.count(),
                         height: Tile.size * Board.menu.count()
                     });
                 } else {
+                    Board.game.size({
+                        top: (Screen.window.height - Tile.size * Board.game.count()) / 2,
+                        left: (Screen.window.width - Tile.size * (Board.game.count() + Board.menu.count())) / 2,
+                        width: Tile.size * Board.game.count(),
+                        height: Tile.size * Board.game.count()
+                    });
                     Board.menu.size({
-                        top: 0,
-                        left: Tile.size * Board.game.count(),
+                        top: Board.game.size().top,
+                        left: Tile.size * Board.game.count() + Board.game.size().left,
                         width: Tile.size * Board.menu.count(),
                         height: Tile.size * Board.game.count()
                     });
@@ -92,8 +100,8 @@
                     .outerWidth(Board.game.size().width)
                     .outerHeight(Board.game.size().height)
                     .offset({
-                        top: 0,
-                        left: 0
+                        top: Board.game.size().top,
+                        left: Board.game.size().left
                     });
                 $('#menu')
                     .outerWidth(Board.menu.size().width)
@@ -103,23 +111,6 @@
                         left: Board.menu.size().left
                     });
             }, 500);
-        }
-        $(document).on('keypress', function (e) {
-            if (e.keyCode == 32) {
-                clearInterval(heartbeat);
-            } else if (e.keyCode == 13) {
-                start();
-            } else if (e.keyCode == 112) {
-                console.log('==== START ====');
-                console.log(Board);
-                console.log(Screen);
-                console.log(Tile);
-                console.log('==== FIN ====');
-            }
-        });
-        
-        $(function () {
-            start();
         });
     </script>
 </head>
