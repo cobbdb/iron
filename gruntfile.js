@@ -15,34 +15,40 @@ module.exports = function (grunt) {
                 src: ['./source/*.js']
             }
         },
-        uglify: {
-            options: {
-                mangle: {
-                    except: [
-                        '_',
-                        '$'
-                    ]
-                }
-            },
-            default: {
-                src: ['./source/*.js'],
-                dest: './build/iron.min.js'
-            }
-        },
         watch: {
             scripts: {
                 files: ['./source/*.js'],
                 tasks: ['deploy']
             }
+        },
+        requirejs: {
+            compile: {
+                options: {
+                    baseUrl: 'source',
+                    paths: {
+                        jquery: '//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min'
+                    },
+                    out: 'build',
+                    optimize: 'uglify2',
+                    uglify2: {
+                        mangle: {
+                            except: [
+                                '_',
+                                '$'
+                            ]
+                        }
+                    }
+                }
+            }
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-contrib-requirejs');
 
     grunt.registerTask('deploy', [
         'jshint',
-        'uglify'
+        'requirejs'
     ]);
 };
