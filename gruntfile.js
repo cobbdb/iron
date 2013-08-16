@@ -12,12 +12,12 @@ module.exports = function (grunt) {
                 trailing: true
             },
             default: {
-                src: ['./source/*.js']
+                src: ['source/*.js']
             }
         },
         watch: {
             scripts: {
-                files: ['./source/*.js'],
+                files: ['source/*.js'],
                 tasks: ['deploy']
             }
         },
@@ -26,7 +26,8 @@ module.exports = function (grunt) {
                 options: {
                     baseUrl: 'source',
                     paths: {
-                        jquery: '//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min'
+                        jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min',
+                        underscore: '//underscorejs.org/underscore-min'
                     },
                     out: 'build',
                     optimize: 'uglify2',

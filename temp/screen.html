@@ -22,49 +22,140 @@
                     }
                     return obj[field];
                 };
+            },
+            mutator: function (obj, field, mutator) {
+                return function (o) {
+                    if (mutator) {
+                        return mutator(o);
+                    }
+                    return obj[field];
+                };
             }
         };
 
-        var Panel = function (width, height) {
+        var Panel = function (id, unique) {
             var data = {
-                size: {}
+                id: id,
+                count: {
+                    unique: unique
+                }
             };
-            if (height) {
-                data.count = Dimension(width, height);
-            } else {
-                data.count = width;
-            }
-            return {
-                count: Functions.accessor(data, 'count'),
-                size: Functions.accessor(data, 'size')
+            var Counter = function (data) {
+                data.scale = function (tile) {
+                    return {
+                        width: data.width * tile,
+                        height: data.height * tile
+                    };
+                };
+                return data;
+            };
+            return function (common) {
+                data.count.common = common;
+                return {
+                    count: function (upright) {
+                        if (_(upright).isUndefined()) {
+                            return data.count;
+                        } else if (upright) {
+                            return Counter({
+                                width: data.count.common,
+                                height: data.count.unique
+                            });
+                        } else {
+                            return Counter({
+                                width: data.count.unique,
+                                height: data.count.common
+                            });
+                        }
+                    },
+                    size: function (size) {
+                        $(data.id)
+                            .outerWidth(size.width)
+                            .outerHeight(size.height)
+                            .offset({
+                                top: size.top,
+                                left: size.left
+                            });
+                    }
+                };
             };
         };
 
-        function Frame(o) {
-            return {
-                body: o.body,
-                foot: o.foot,
-                head: o.head,
-                size: function (upright) {
-                    if (upright) {
-                        return {
-                            width: o.body.count(),
-                            height: o.body.count() + o.foot.count() + o.head.count()
-                        };
-                    } else {
-                        return {
-                            width: o.body.count() + o.foot.count() + o.head.count(),
-                            height: o.body.count()
-                        };
+        function Frame(common, o) {
+            var data = {
+                size: {},
+                panels: {
+                    head: o.head(common),
+                    body: o.body(common),
+                    foot: o.foot(common),
+                    sumUnique: function () {
+                        return _(data.panels).reduce(function (panel, count) {
+                            return count + panel.count().unique;
+                        }, 0);
                     }
                 }
             };
-        }
-
-        function Dimension(w, h) {
+            var getCount = function (upright) {
+                if (upright) {
+                    return {
+                        width: common,
+                        height: data.panels.sumUnique()
+                    };
+                } else {
+                    return {
+                        width: data.panels.sumUnique(),
+                        height: common
+                    };
+                }
+            };
             return {
-                width: w,
-                height: h
+                head: data.head,
+                body: data.body,
+                foot: data.foot,
+                count: function (upright) {
+                    if (_(upright).isBoolean()) {
+                        return getCount(upright);
+                    } else {
+                        throw TypeError('{Constructor}:Frame - count() requires {Boolean}:upright');
+                    }
+                },
+                size: Functions.mutator(data, 'size', function (o) {
+                    data.size = {
+                        width: o.count.width * o.tile,
+                        height: o.count.height * o.tile
+                    };
+                    // Probably something like this?
+                    _(data.panels).each(function (panel) {
+                        var dimensions = panel.count(o.upright).scale(o.tile);
+                        panel.size({
+                            width: panel.width,
+                            height: panel.height,
+                            top: 0,
+                            left: 0
+                        });
+                    });
+                    // .. instead of this VV
+                    var panel = data.head.count(o.upright).scale(o.tile);
+                    data.head.size({
+                        width: panel.width,
+                        height: panel.height,
+                        top: 0,
+                        left: 0
+                    });
+                    panel = data.body.count(o.upright).scale(o.tile);
+                    data.body.size({
+                        width: panel.width,
+                        height: panel.height,
+                        top: 0,
+                        left: 0
+                    });
+                    panel = data.foot.count(o.upright).scale(o.tile);
+                    data.foot.size({
+                        width: panel.width,
+                        height: panel.height,
+                        top: 0,
+                        left: 0
+                    });
+                })
             };
         }
 
@@ -82,26 +173,35 @@
 
         var Tile = {};
 
-        var frame = Frame({
-            body: Panel(10, 10),
-            foot: Panel(4),
-            head: Panel(2)
+        var frame = Frame(10, {
+            head: Panel('#cap', 2),
+            body: Panel('#game', 10),
+            foot: Panel('#menu', 4)
         });
 
         $(function () {
             heartbeat = setInterval(function () {
                 var screen = Screen({
-                    max: Dimension(1024, 768),
-                    window: Dimension(
-                        $(window).width(),
-                        $(window).height()
-                    )
+                    max: {
+                        width: 1024,
+                        height: 768
+                    },
+                    window: {
+                        width: $(window).width(),
+                        height: $(window).height()
+                    }
                 });
 
-                var frameSize = frame.size(screen.upright);
-                var tall = Math.floor(screen.size.height / frameSize.height);
-                var wide = Math.floor(screen.size.width / frameSize.width);
+                var frameCount = frame.count(screen.upright);
+                var tall = Math.floor(screen.size.height / frameCount.height);
+                var wide = Math.floor(screen.size.width / frameCount.width);
                 Tile.size = Math.min(tall, wide);
+
+                frame.size({
+                    upright: screen.upright,
+                    windowSize: screen.window,
+                    tileSize: Tile.size
+                });
 
                 if (screen.upright) {
                     Panel.board.size({
@@ -150,6 +250,7 @@
     </script>
 </head>
 <body>
+    <div id="cap" class="panel"></div>
     <div id="game" class="panel"></div>
     <div id="menu" class="panel"></div>
 </body>
