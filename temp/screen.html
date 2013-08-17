@@ -4,38 +4,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         .panel{border:2px solid;position:absolute}
-        #game{border-color:red;left:0;top:0}
-        #menu{border-color:green}
+        #ir-head{border-color:blue}
+        #ir-body{border-color:red}
+        #ir-foot{border-color:green}
         html,body{height:100%;min-height:100%;margin:0}
         *{overflow:hidden;position:relative}
     </style>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="//underscorejs.org/underscore-min.js"></script>
     <script>
-        var heartbeat;
-
         var Functions = {
             accessor: function (obj, field) {
                 return function (data) {
-                    if (data) {
-                        obj[field] = data;
-                        return obj;
+                    if (_(data).isUndefined()) {
+                        return obj[field];
                     }
-                    return obj[field];
+                    obj[field] = data;
+                    return obj;
                 };
             },
             mutator: function (obj, field, mutator) {
-                return function (o) {
-                    if (mutator) {
-                        return mutator(o);
+                return function (params) {
+                    if (_(params).isUndefined()) {
+                        return obj[field];
                     }
-                    return obj[field];
+                    return mutator(params);
                 };
             }
         };
 
-        var Panel = function (id, unique) {
+        var Liquid = L = function (actual) {
+            return {
+                is: {
+                    type: function (expected) {
+                        var type = typeof(actual);
+                        if (type !== expected.toLowerCase()) {
+                            throw TypeError('Expected {' + expected + '} but found {' + type + '} instead.');
+                        }
+                    },
+                    types: function (expected) {
+                        for (var key in expected) {
+                            var type = typeof(actual[key]);
+                            if (type !== expected[key].toLowerCase()) {
+                                throw TypeError('Expected ' + key + ' to be type {' + expected[key] + '} but found {' + type + '} instead.');
+                            }
+                        }
+                    }
+                }
+            };
+        };
+
+        var Panel = function (unique) {
             var data = {
-                id: id,
                 count: {
                     unique: unique
                 }
@@ -49,13 +69,11 @@
                 };
                 return data;
             };
-            return function (common) {
+            return function (id, common) {
                 data.count.common = common;
                 return {
-                    count: function (upright) {
-                        if (_(upright).isUndefined()) {
-                            return data.count;
-                        } else if (upright) {
+                    count: Functions.mutator(data, 'count', function (upright) {
+                        if (upright) {
                             return Counter({
                                 width: data.count.common,
                                 height: data.count.unique
@@ -66,9 +84,9 @@
                                 height: data.count.common
                             });
                         }
-                    },
+                    }),
                     size: function (size) {
-                        $(data.id)
+                        $(id)
                             .outerWidth(size.width)
                             .outerHeight(size.height)
                             .offset({
@@ -84,38 +102,29 @@
             var data = {
                 size: {},
                 panels: {
-                    head: o.head(common),
-                    body: o.body(common),
-                    foot: o.foot(common),
-                    sumUnique: function () {
-                        return _(data.panels).reduce(function (panel, count) {
-                            return count + panel.count().unique;
-                        }, 0);
-                    }
+                    head: o.head('#ir-head', common),
+                    body: o.body('#ir-body', common),
+                    foot: o.foot('#ir-foot', common)
                 }
             };
-            var getCount = function (upright) {
-                if (upright) {
-                    return {
-                        width: common,
-                        height: data.panels.sumUnique()
-                    };
-                } else {
-                    return {
-                        width: data.panels.sumUnique(),
-                        height: common
-                    };
-                }
-            };
+            var unique = _(data.panels).reduce(function (count, panel) {
+                return count + panel.count().unique;
+            }, 0);
             return {
                 head: data.head,
                 body: data.body,
                 foot: data.foot,
                 count: function (upright) {
-                    if (_(upright).isBoolean()) {
-                        return getCount(upright);
+                    if (upright) {
+                        return {
+                            width: common,
+                            height: unique
+                        };
                     } else {
-                        throw TypeError('{Constructor}:Frame - count() requires {Boolean}:upright');
+                        return {
+                            width: unique,
+                            height: common
+                        };
                     }
                 },
                 size: Functions.mutator(data, 'size', function (o) {
@@ -123,37 +132,21 @@
                         width: o.count.width * o.tile,
                         height: o.count.height * o.tile
                     };
-                    // Probably something like this?
-                    _(data.panels).each(function (panel) {
+                    _(data.panels).reduce(function (offset, panel) {
                         var dimensions = panel.count(o.upright).scale(o.tile);
                         panel.size({
-                            width: panel.width,
-                            height: panel.height,
-                            top: 0,
-                            left: 0
+                            width: dimensions.width,
+                            height: dimensions.height,
+                            top: offset.top,
+                            left: offset.left
                         });
-                    });
-                    // .. instead of this VV
-                    var panel = data.head.count(o.upright).scale(o.tile);
-                    data.head.size({
-                        width: panel.width,
-                        height: panel.height,
-                        top: 0,
-                        left: 0
-                    });
-                    panel = data.body.count(o.upright).scale(o.tile);
-                    data.body.size({
-                        width: panel.width,
-                        height: panel.height,
-                        top: 0,
-                        left: 0
-                    });
-                    panel = data.foot.count(o.upright).scale(o.tile);
-                    data.foot.size({
-                        width: panel.width,
-                        height: panel.height,
-                        top: 0,
-                        left: 0
+                        return {
+                            top: offset.top + dimensions.height,
+                            left: offset.left + dimensions.width
+                        };
+                    }, {
+                        top: (o.window.height - data.size.height) / 2,
+                        left: (o.window.width - data.size.width) / 2
                     });
                 })
             };
@@ -173,14 +166,13 @@
 
         var Tile = {};
 
-        var frame = Frame(10, {
-            head: Panel('#cap', 2),
-            body: Panel('#game', 10),
-            foot: Panel('#menu', 4)
-        });
-
         $(function () {
-            heartbeat = setInterval(function () {
+            var frame = Frame(10, {
+                head: Panel(2),
+                body: Panel(10),
+                foot: Panel(4)
+            });
+            var heartbeat = setInterval(function () {
                 var screen = Screen({
                     max: {
                         width: 1024,
@@ -199,59 +191,17 @@
 
                 frame.size({
                     upright: screen.upright,
-                    windowSize: screen.window,
-                    tileSize: Tile.size
+                    window: screen.window,
+                    tile: Tile.size,
+                    count: frame.count(screen.upright)
                 });
-
-                if (screen.upright) {
-                    Panel.board.size({
-                        top: (screen.window.height - Tile.size * (Panel.board.count() + Panel.menu.count())) / 2,
-                        left: (screen.window.width - Tile.size * Panel.board.count()) / 2,
-                        width: Tile.size * Panel.board.count(),
-                        height: Tile.size * Panel.board.count()
-                    });
-                    Panel.menu.size({
-                        top: Tile.size * Panel.board.count() + Panel.board.size().top,
-                        left: Panel.board.size().left,
-                        width: Tile.size * Panel.board.count(),
-                        height: Tile.size * Panel.menu.count()
-                    });
-                } else {
-                    Panel.board.size({
-                        top: (screen.window.height - Tile.size * Panel.board.count()) / 2,
-                        left: (screen.window.width - Tile.size * (Panel.board.count() + Panel.menu.count())) / 2,
-                        width: Tile.size * Panel.board.count(),
-                        height: Tile.size * Panel.board.count()
-                    });
-                    Panel.menu.size({
-                        top: Panel.board.size().top,
-                        left: Tile.size * Panel.board.count() + Panel.board.size().left,
-                        width: Tile.size * Panel.menu.count(),
-                        height: Tile.size * Panel.board.count()
-                    });
-                }
-
-                $('#game')
-                    .outerWidth(Panel.board.size().width)
-                    .outerHeight(Panel.board.size().height)
-                    .offset({
-                        top: Panel.board.size().top,
-                        left: Panel.board.size().left
-                    });
-                $('#menu')
-                    .outerWidth(Panel.menu.size().width)
-                    .outerHeight(Panel.menu.size().height)
-                    .offset({
-                        top: Panel.menu.size().top,
-                        left: Panel.menu.size().left
-                    });
             }, 500);
         });
     </script>
 </head>
 <body>
-    <div id="cap" class="panel"></div>
-    <div id="game" class="panel"></div>
-    <div id="menu" class="panel"></div>
+    <div id="ir-head" class="panel"></div>
+    <div id="ir-body" class="panel"></div>
+    <div id="ir-foot" class="panel"></div>
 </body>
 </html>
