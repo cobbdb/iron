@@ -54,7 +54,7 @@
             };
         };
 
-        var Panel = function (id, common, unique) {
+        function Panel(id, common, unique) {
             $('<div/>', {
                 id: id,
                 class: 'ir-panel',
@@ -138,7 +138,7 @@
             };
         }
 
-        var Screen = function (max) {
+        function Screen(max) {
             var data = {
                 window: {},
                 upright: false
@@ -158,47 +158,60 @@
             };
         };
 
-        var config = {
-            max: {
-                width: 800,
-                height: 600
-            },
-            grid: 10,
-            panels: [{
-                id: 'head',
-                grid: 2
-            }, {
-                id: 'body',
-                grid: 10
-            }, {
-                id: 'foot',
-                grid: 4
-            }]
-        };
-
-        $(function () {
+        function Iron(config) {
             $('body, html').attr('style', 'height:100%;min-height:100%;margin:0');
             var frame = Frame(config);
             var screen = Screen(config.max);
+            var heartbeat;
 
-            var heartbeat = setInterval(function () {
-                screen.window({
-                    width: $(window).width(),
-                    height: $(window).height()
-                });
+            return {
+                run: function () {
+                    heartbeat = window.setInterval(function () {
+                        screen.window({
+                            width: $(window).width(),
+                            height: $(window).height()
+                        });
 
-                var frameCount = frame.count(screen.upright());
-                var tall = screen.window().height / frameCount.height;
-                var wide = screen.window().width / frameCount.width;
-                var tile = Math.min(tall, wide);
+                        var frameCount = frame.count(screen.upright());
+                        var tall = screen.window().height / frameCount.height;
+                        var wide = screen.window().width / frameCount.width;
+                        var tile = Math.min(tall, wide);
 
-                frame.size({
-                    upright: screen.upright(),
-                    window: screen.window(),
-                    tile: tile,
-                    count: frameCount
-                });
-            }, 500);
+                        frame.size({
+                            upright: screen.upright(),
+                            window: screen.window(),
+                            tile: tile,
+                            count: frameCount
+                        });
+                    }, 500);
+                },
+                wait: function () {
+                    window.clearInterval(heartbeat);
+                }
+            };
+        }
+
+        $(function () {
+            var config = {
+                max: {
+                    width: 800,
+                    height: 600
+                },
+                grid: 10,
+                panels: [{
+                    id: 'head',
+                    grid: 2
+                }, {
+                    id: 'body',
+                    grid: 10
+                }, {
+                    id: 'foot',
+                    grid: 4
+                }]
+            };
+
+            var iron = Iron(config);
+            iron.run();
         });
     </script>
 </head>
