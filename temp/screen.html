@@ -3,11 +3,10 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .panel{border:2px solid;position:absolute}
+        .ir-panel{border:2px solid}
         #ir-head{border-color:blue}
         #ir-body{border-color:red}
         #ir-foot{border-color:green}
-        html,body{height:100%;min-height:100%;margin:0}
         *{overflow:hidden;position:relative}
     </style>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -56,6 +55,11 @@
         };
 
         var Panel = function (id, common, unique) {
+            $('<div/>', {
+                id: id,
+                class: 'ir-panel',
+                style: 'position:absolute;'
+            }).appendTo('body');
             var data = {
                 count: {
                     common: common,
@@ -80,7 +84,7 @@
                     };
                 }),
                 offset: function (offset) {
-                    $(id)
+                    $('#' + id)
                         .outerWidth(data.size.width)
                         .outerHeight(data.size.height)
                         .offset(offset);
@@ -97,7 +101,7 @@
             var unique = 0;
             for (var i in o.panels) {
                 var panel = o.panels[i];
-                data.panels[panel.id] = Panel('#ir-' + panel.id, o.grid, panel.grid);
+                data.panels[panel.id] = Panel('ir-' + panel.id, o.grid, panel.grid);
                 unique += data.panels[panel.id].count().unique;
             }
             return {
@@ -156,7 +160,7 @@
 
         var config = {
             max: {
-                width: 200,
+                width: 800,
                 height: 600
             },
             grid: 10,
@@ -173,6 +177,11 @@
         };
 
         $(function () {
+            $('body, html').css({
+                height: '100%',
+                'min-height': '100%',
+                margin: 0
+            });
             var frame = Frame(config);
             var screen = Screen(config.max);
 
@@ -197,9 +206,5 @@
         });
     </script>
 </head>
-<body>
-    <div id="ir-head" class="panel"></div>
-    <div id="ir-body" class="panel"></div>
-    <div id="ir-foot" class="panel"></div>
-</body>
+<body></body>
 </html>
