@@ -58,7 +58,7 @@
             $('<div/>', {
                 id: id,
                 class: 'ir-panel',
-                style: 'position:absolute;'
+                style: 'position:absolute'
             }).appendTo('body');
             var data = {
                 count: {
@@ -177,11 +177,7 @@
         };
 
         $(function () {
-            $('body, html').css({
-                height: '100%',
-                'min-height': '100%',
-                margin: 0
-            });
+            $('body, html').attr('style', 'height:100%;min-height:100%;margin:0');
             var frame = Frame(config);
             var screen = Screen(config.max);
 
