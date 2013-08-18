@@ -28,7 +28,8 @@
                     if (_(params).isUndefined()) {
                         return obj[field];
                     }
-                    return mutator(params);
+                    mutator(params);
+                    return obj[field];
                 };
             }
         };
@@ -54,146 +55,143 @@
             };
         };
 
-        var Panel = function (unique) {
+        var Panel = function (id, common, unique) {
             var data = {
                 count: {
+                    common: common,
                     unique: unique
-                }
+                },
+                size: {}
             };
-            var Counter = function (data) {
-                data.scale = function (tile) {
-                    return {
-                        width: data.width * tile,
-                        height: data.height * tile
+            var recount = function (upright) {
+                data.count.width = (upright) ? common : unique;
+                data.count.height = (upright) ? unique : common;
+                return data.count;
+            };
+            return {
+                count: function (upright) {
+                    return recount(upright);
+                },
+                size: Functions.mutator(data, 'size', function (o) {
+                    recount(o.upright);
+                    data.size = {
+                        width: data.count.width * o.tile,
+                        height: data.count.height * o.tile
                     };
-                };
-                return data;
-            };
-            return function (id, common) {
-                data.count.common = common;
-                return {
-                    count: Functions.mutator(data, 'count', function (upright) {
-                        if (upright) {
-                            return Counter({
-                                width: data.count.common,
-                                height: data.count.unique
-                            });
-                        } else {
-                            return Counter({
-                                width: data.count.unique,
-                                height: data.count.common
-                            });
-                        }
-                    }),
-                    size: function (size) {
-                        $(id)
-                            .outerWidth(size.width)
-                            .outerHeight(size.height)
-                            .offset({
-                                top: size.top,
-                                left: size.left
-                            });
-                    }
-                };
+                }),
+                offset: function (offset) {
+                    $(id)
+                        .outerWidth(data.size.width)
+                        .outerHeight(data.size.height)
+                        .offset(offset);
+                }
             };
         };
 
-        function Frame(common, o) {
+        function Frame(o) {
             var data = {
                 size: {},
-                panels: {
-                    head: o.head('#ir-head', common),
-                    body: o.body('#ir-body', common),
-                    foot: o.foot('#ir-foot', common)
-                }
+                panels: {},
+                count: {}
             };
-            var unique = _(data.panels).reduce(function (count, panel) {
-                return count + panel.count().unique;
-            }, 0);
+            var unique = 0;
+            for (var i in o.panels) {
+                var panel = o.panels[i];
+                data.panels[panel.id] = Panel('#ir-' + panel.id, o.grid, panel.grid);
+                unique += data.panels[panel.id].count().unique;
+            }
             return {
-                head: data.head,
-                body: data.body,
-                foot: data.foot,
                 count: function (upright) {
-                    if (upright) {
-                        return {
-                            width: common,
-                            height: unique
-                        };
-                    } else {
-                        return {
-                            width: unique,
-                            height: common
-                        };
-                    }
+                    data.count = {
+                        width: (upright) ? o.grid : unique,
+                        height: (upright) ? unique : o.grid
+                    };
+                    return data.count;
                 },
                 size: Functions.mutator(data, 'size', function (o) {
                     data.size = {
-                        width: o.count.width * o.tile,
-                        height: o.count.height * o.tile
+                        width: data.count.width * o.tile,
+                        height: data.count.height * o.tile
                     };
-                    _(data.panels).reduce(function (offset, panel) {
-                        var dimensions = panel.count(o.upright).scale(o.tile);
-                        panel.size({
-                            width: dimensions.width,
-                            height: dimensions.height,
+                    var offset = {
+                        top: (o.window.real.height - data.size.height) / 2,
+                        left: (o.window.real.width - data.size.width) / 2
+                    };
+                    for (var i in data.panels) {
+                        var panel = data.panels[i];
+                        var dimensions = panel.size(o);
+                        panel.offset({
                             top: offset.top,
                             left: offset.left
                         });
-                        return {
-                            top: offset.top + dimensions.height,
-                            left: offset.left + dimensions.width
-                        };
-                    }, {
-                        top: (o.window.height - data.size.height) / 2,
-                        left: (o.window.width - data.size.width) / 2
-                    });
+                        if (o.upright) {
+                            offset.top += dimensions.height;
+                        } else {
+                            offset.left += dimensions.width;
+                        }
+                    }
                 })
             };
         }
 
-        var Screen = function (o) {
+        var Screen = function (max) {
+            var data = {
+                window: {},
+                upright: false
+            };
             return {
-                max: o.max,
-                window: o.window,
-                size: {
-                    width: Math.min(o.window.width, o.max.width),
-                    height: Math.min(o.window.height, o.max.height)
-                },
-                upright: (o.window.height > o.window.width)
+                window: Functions.mutator(data, 'window', function (size) {
+                    data.window = {
+                        width: Math.min(max.width, size.width),
+                        height: Math.min(max.height, size.height),
+                        real: size
+                    };
+                    data.upright = (data.window.height > data.window.width);
+                }),
+                upright: function () {
+                    return data.upright;
+                }
             };
         };
 
-        var Tile = {};
+        var config = {
+            max: {
+                width: 200,
+                height: 600
+            },
+            grid: 10,
+            panels: [{
+                id: 'head',
+                grid: 2
+            }, {
+                id: 'body',
+                grid: 10
+            }, {
+                id: 'foot',
+                grid: 4
+            }]
+        };
 
         $(function () {
-            var frame = Frame(10, {
-                head: Panel(2),
-                body: Panel(10),
-                foot: Panel(4)
-            });
+            var frame = Frame(config);
+            var screen = Screen(config.max);
+
             var heartbeat = setInterval(function () {
-                var screen = Screen({
-                    max: {
-                        width: 1024,
-                        height: 768
-                    },
-                    window: {
-                        width: $(window).width(),
-                        height: $(window).height()
-                    }
+                screen.window({
+                    width: $(window).width(),
+                    height: $(window).height()
                 });
 
-                var frameCount = frame.count(screen.upright);
-                var tall = Math.floor(screen.size.height / frameCount.height);
-                var wide = Math.floor(screen.size.width / frameCount.width);
-                Tile.size = Math.min(tall, wide);
+                var frameCount = frame.count(screen.upright());
+                var tall = screen.window().height / frameCount.height;
+                var wide = screen.window().width / frameCount.width;
+                var tile = Math.min(tall, wide);
 
                 frame.size({
-                    upright: screen.upright,
-                    window: screen.window,
-                    tile: Tile.size,
-                    count: frame.count(screen.upright)
+                    upright: screen.upright(),
+                    window: screen.window(),
+                    tile: tile,
+                    count: frameCount
                 });
             }, 500);
         });
