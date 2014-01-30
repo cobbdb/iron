@@ -1,0 +1,19 @@
+{
+  "name": "iron",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "source",
+    "**/*.json",
+    "gruntfile.js",
+    "temp"
+  ],
+  "main": "build/iron-core.min.js",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

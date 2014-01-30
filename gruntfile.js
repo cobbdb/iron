@@ -12,33 +12,36 @@ module.exports = function (grunt) {
                 trailing: true
             },
             default: {
-                src: ['source/*.js']
+                src: [
+                    'source/**/*.js'
+                ]
             }
         },
         watch: {
             scripts: {
-                files: ['source/*.js'],
-                tasks: ['deploy']
+                files: [
+                    'source/**/*.js'
+                ],
+                tasks: [
+                    'default'
+                ]
             }
         },
-        requirejs: {
-            compile: {
-                options: {
-                    baseUrl: 'source',
-                    paths: {
-                        jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min',
-                        underscore: '//underscorejs.org/underscore-min'
-                    },
-                    out: 'build',
-                    optimize: 'uglify2',
-                    uglify2: {
-                        mangle: {
-                            except: [
-                                '_',
-                                '$'
-                            ]
-                        }
-                    }
+        uglify: {
+            build: {
+                files: {
+                    'build/iron-core.min.js': [
+                        'build/iron-core.js'
+                    ]
+                }
+            }
+        },
+        browserify: {
+            build: {
+                files: {
+                    'build/iron-core.js': [
+                        'source/**/*.js'
+                    ]
                 }
             }
         }
@@ -46,10 +49,12 @@ module.exports = function (grunt) {
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-requirejs');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-browserify');
 
-    grunt.registerTask('deploy', [
+    grunt.registerTask('default', [
         'jshint',
-        'requirejs'
+        'browserify',
+        'uglify'
     ]);
 };
