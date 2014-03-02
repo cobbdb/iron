@@ -33,27 +33,6 @@
             }
         };
 
-        var Liquid = L = function (actual) {
-            return {
-                is: {
-                    type: function (expected) {
-                        var type = typeof(actual);
-                        if (type !== expected.toLowerCase()) {
-                            throw TypeError('Expected {' + expected + '} but found {' + type + '} instead.');
-                        }
-                    },
-                    types: function (expected) {
-                        for (var key in expected) {
-                            var type = typeof(actual[key]);
-                            if (type !== expected[key].toLowerCase()) {
-                                throw TypeError('Expected ' + key + ' to be type {' + expected[key] + '} but found {' + type + '} instead.');
-                            }
-                        }
-                    }
-                }
-            };
-        };
-
         function Panel(id, common, unique) {
             $('<div/>', {
                 id: id,

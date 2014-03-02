@@ -13,6 +13,8 @@
   ],
   "main": "build/iron-core.min.js",
   "dependencies": {
+    "jQuery": "2.x",
+    "underscore": "1.x"
   },
   "devDependencies": {
   }
