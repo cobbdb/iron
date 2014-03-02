@@ -1,5 +1,5 @@
 {
-  "name": "iron-core",
+  "name": "iron",
   "homepage": "https://github.com/cobbdb/iron",
   "main": "build/iron.min.js",
   "scripts": {

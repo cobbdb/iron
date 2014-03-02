@@ -1,5 +1,5 @@
 {
-  "name": "iron-core",
+  "name": "iron",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -11,7 +11,7 @@
     "gruntfile.js",
     "temp"
   ],
-  "main": "build/iron-core.min.js",
+  "main": "build/iron.min.js",
   "dependencies": {
     "jQuery": "2.x",
     "underscore": "1.x"
