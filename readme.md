@@ -1,10 +1,9 @@
-# Iron
-### Mobile-friendly HTML5 game engine.
-Version **0.0.1**
+Iron
+====
 
----
-* See: [Github Page](http://www.github.com/cobbdb/iron)
-* See: [NPM Page](https://npmjs.org/package/iron-core)
+Powerful and extensible HTML5 game engine.
+
+    $ bower install iron-core
 
 ---
 By Dan Cobb: <cobbdb@gmail.com> - http://petitgibier.sytes.net  

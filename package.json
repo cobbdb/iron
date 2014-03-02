@@ -1,6 +1,5 @@
 {
-  "name": "iron",
-  "description": "Mobile-friendly HTML5 game engine.",
+  "name": "iron-core",
   "homepage": "https://github.com/cobbdb/iron",
   "main": "build/iron.min.js",
   "scripts": {
